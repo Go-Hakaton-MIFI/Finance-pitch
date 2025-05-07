@@ -1,0 +1,60 @@
+version: '3.6'
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    networks:
+      - internal
+    ports:
+      - 8089:8089
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: postgres-container-go
+    image: postgres:15
+    restart: always
+    volumes:
+      - finance_postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=go_clean_template_db
+      - LANG=C.UTF-8
+    ports:
+      - 5432:5432
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      retries: 5
+      timeout: 5s
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/export
+    ports:
+      - "9002:9000"
+      - "32921:32921"
+    restart: always
+    environment:
+      MINIO_ROOT_USER: development_minio_key
+      MINIO_ROOT_PASSWORD: development_minio_secret
+    command: server /export
+
+    networks:
+      - internal
+
+volumes:
+  finance_postgres_data:
+  minio-data:
+
+
+networks:
+  internal:

@@ -1,0 +1,37 @@
+FROM golang:1.23.2-alpine
+
+WORKDIR /app
+
+# Устанавливаем необходимые пакеты
+RUN apk --no-cache add gcc musl-dev postgresql-client dos2unix
+
+# Настраиваем GOPROXY и TLS
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=off
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+
+# Устанавливаем инструменты разработки
+RUN go install github.com/air-verse/air@latest
+RUN wget -qO- https://github.com/pressly/goose/releases/download/v3.24.1/goose_linux_x86_64 > /usr/local/bin/goose && chmod +x /usr/local/bin/goose
+
+# Копируем только файлы, необходимые для сборки
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Копируем исходный код
+COPY . .
+
+# Копируем миграции
+COPY internal/migrations /migrations
+
+# Копируем скрипты Docker и конфигурацию air
+COPY docker/entrypoint-local.sh /app/entrypoint.sh
+COPY docker/.air.toml /app/.air.toml
+RUN chmod +x /app/entrypoint.sh && \
+    dos2unix /app/entrypoint.sh && \
+    sed -i 's/\r$//' /app/entrypoint.sh
+
+EXPOSE 8089
+
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]

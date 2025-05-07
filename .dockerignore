@@ -1,0 +1,30 @@
+# Исключаем node_modules
+frontend/node_modules
+frontend/.next
+frontend/.pnpm-store
+
+# Исключаем временные файлы
+**/tmp
+**/temp
+
+# Исключаем файлы разработки
+**/.git
+**/.gitignore
+**/.env
+**/.env.*
+**/.vscode
+**/.idea
+
+# Исключаем логи
+**/*.log
+
+# Исключаем бинарные файлы
+**/*.exe
+**/*.dll
+**/*.so
+**/*.dylib
+
+# Исключаем кэш
+**/.cache
+**/.npm
+**/.yarn 
